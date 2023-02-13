@@ -1,44 +1,47 @@
 import './css/styles.css';
-import fetchCountries from './js/fetchCountries.js';
-import debounce from 'lodash.debounce';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
+import debounce from 'lodash.debounce';
+import { Notify } from 'notiflix';
+
+import  fetchCountries  from './js/fetchCountries';
 
 const DEBOUNCE_DELAY = 300;
 
-const input = document.getElementById("search-box");
-const divInfo = document.querySelector(".country-info");
-const ulEL = document.querySelector('.country-list');
+const searchRef = document.querySelector('#search-box');
+const countryListRef = document.querySelector('.country-list');
+const countryInfoRef = document.querySelector('.country-info');
 
-input.addEventListener('input', debounce(onInput, DEBOUNCE_DELAY));
+searchRef.addEventListener('input', debounce(onInput, DEBOUNCE_DELAY));
 
- function onInput(e) {
-  let country = e.target.value.trim();
+function onInput(e) {
+  let inputCountry = e.target.value.trim();
 
-  if (country) {
-    return fetchCountries(country)
+  if (inputCountry) {
+    return fetchCountries(inputCountry)
       .then(data => {
         choseMarkup(data);
       })
-      .catch(onError);
+      .catch(error => {
+        Notify.failure('Oops, there is no country with that name');
+      });
   }
-  divInfo.innerHTML = '';
-  ulEL.innerHTML = '';
-};
 
+  countryInfoRef.innerHTML = '';
+  countryListRef.innerHTML = '';
+}
 
-ulEL.style.listStyle = 'none';
-ulEL.style.margin = '0';
-ulEL.style.padding = '8px';
+countryListRef.style.listStyle = 'none';
+countryListRef.style.margin = '0';
+countryListRef.style.padding = '8px';
 
 function choseMarkup(countryArray) {
   if (countryArray.length === 1) {
-    ulEL.innerHTML = '';
-    return  markupCountry(countryArray);
+    countryListRef.innerHTML = '';
+    return markupCountry(countryArray);
   }
   if (countryArray.length >= 2 && countryArray.length <= 10) {
-    divInfo.innerHTML = '';
-    return createMarkup(countryArray);
+    countryInfoRef.innerHTML = '';
+    return markupCountryItem(countryArray);
   }
 
   return Notify.info(
@@ -46,7 +49,7 @@ function choseMarkup(countryArray) {
   );
 }
 
-function markupCountry(data) {
+function markupCountryItem(data) {
   const markup = data
     .map(el => {
       return `<li class="country-item">
@@ -56,40 +59,35 @@ function markupCountry(data) {
     })
     .join('');
 
-  ulEL.innerHTML = markup;
+  countryListRef.innerHTML = markup;
 }
 
- function createMarkup(data){
-   const countryInfo = data.map(el =>{
-    return `<h1>
-           <img src="${el.flags.svg}" alt="${
-            el.name.official
-          }" width="40" height="20" /> 
-          </h1>
-          <ul class="country-list">
-            <li class="country-item">
-              <h2>Capital:</h2>
-              <p>${el.capital}</p>
-            </li>
-            <li class="country-item">
-              <h2>Population:</h2>
-              <p>${el.population}</p>
-            </li>
-            <li class="country-item">
-              <h2>Languages:</h2>
-              <p>${Object.values(el.languages).join(', ')}</p>
-            </li>
-          </ul>`;
-  })
-  .join('');
-  divInfo.innerHTML = countryInfo;
-};
+function markupCountry(data) {
+  const markup = data
+    .map(el => {
+      return `<h1>
+       <img src="${el.flags.svg}" alt="${
+        el.name.official
+      }" width="40" height="20" /> 
+            
+        ${el.name.official}
+      </h1>
+      <ul class="country-info_list">
+        <li class="country-info_item">
+          <h2>Capital:</h2>
+          <p>${el.capital}</p>
+        </li>
+        <li class="country-info_item">
+          <h2>Population:</h2>
+          <p>${el.population}</p>
+        </li>
+        <li class="country-info_item">
+          <h2>Languages:</h2>
+          <p>${Object.values(el.languages).join(', ')}</p>
+        </li>
+      </ul>`;
+    })
+    .join('');
 
-function onError (err){
-  Notify.failure("Oops, there is no country with that name");
-};
-
-
-
-
-
+  countryInfoRef.innerHTML = markup;
+}
